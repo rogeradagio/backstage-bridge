@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
+    <template id="backstage_bridge_notifications_preparing_at_warehouse_template" label="Backstage: preparando en el almacén" file="preparing_at_warehouse.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_in_transit_to_store_template" label="Backstage: en camino a la tienda" file="in_transit_to_store.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_ready_for_pickup_template" label="Backstage: listo para recoger" file="ready_for_pickup.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_partially_fulfilled_template" label="Backstage: enviado parcialmente" file="partially_fulfilled.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_dispatched_template" label="Backstage: enviado" file="dispatched.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_collected_template" label="Backstage: recogido" file="collected.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_delivered_template" label="Backstage: entregado" file="delivered.html" type="html" module="Backstage_Bridge" area="frontend"/>
+    <template id="backstage_bridge_notifications_cancelled_template" label="Backstage: cancelado" file="cancelled.html" type="html" module="Backstage_Bridge" area="frontend"/>
+</config>

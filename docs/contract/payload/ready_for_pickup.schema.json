@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Payload ready_for_pickup",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pickup_location_code"],
+  "properties": {
+    "pickup_location_code": { "type": "string", "minLength": 1, "description": "source_code MSI de la botiga de recollida" },
+    "leg_ref": { "type": "string", "description": "Albarà Odoo que ha completat la mercaderia (recepció web), si n'hi ha" },
+    "replay": { "type": "boolean" }
+  }
+}

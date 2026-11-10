@@ -1,0 +1,360 @@
+openapi: 3.1.0
+info:
+  title: Backstage Bridge API
+  version: 0.1.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: |
+    API REST del mòdul Magento 2 `Backstage_Bridge`. Rep esdeveniments de compliment
+    procedents de l'ERP (Odoo) i els aplica a les comandes de Magento.
+
+    - Només hi ha una ruta: `POST /V1/backstage/events`.
+    - L'autenticació és un token d'integració de Magento amb el recurs ACL `Backstage_Bridge::events_write`.
+    - El camp `event.payload` és un **string JSON**. El seu contingut depèn de `event_type`
+      (vegeu els esquemes `Payload*` a la secció *Schemas* i els exemples de la petició).
+    - Les peticions són idempotents per `event_id`: si es reenvia el mateix contingut,
+      es retorna el resultat anterior amb `status = replayed`.
+
+    Contracte detallat: [docs/contract/README.md](contract/README.md).
+servers:
+  - url: '{baseUrl}/rest/{storeCode}'
+    variables:
+      baseUrl:
+        default: https://magento.example.test
+        description: URL base de la botiga Magento
+      storeCode:
+        default: default
+        description: Codi de store view per a la ruta REST (`default` o `all`). La botiga de la comanda es tria amb `event.store_code`.
+security:
+  - integrationToken: []
+tags:
+  - name: Events
+    description: Esdeveniments de compliment ERP → Magento
+paths:
+  /V1/backstage/events:
+    post:
+      tags: [Events]
+      operationId: submitFulfillmentEvent
+      summary: Envia un esdeveniment de compliment
+      description: |
+        Valida i aplica un esdeveniment. Si el mòdul està configurat en mode `dry_run`,
+        només el valida i no modifica res (`status = validated`).
+
+        Els errors de negoci porten el codi entre claudàtors al principi de `message`,
+        per exemple `[order_not_found] ...`. Es pot llegir amb la regex `^\[([a-z_]+)\]`.
+        Amb un 4xx no s'ha de reintentar; amb un 503 sí.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+            examples:
+              preparing_at_warehouse:
+                summary: preparing_at_warehouse
+                value:
+                  event:
+                    event_id: so-1001-preparing
+                    event_type: preparing_at_warehouse
+                    store_code: es_es
+                    order_reference: '000000101'
+                    occurred_at: '2026-11-07T08:00:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"origin_source_codes":["wh_central"]}'
+              in_transit_to_store:
+                summary: in_transit_to_store
+                value:
+                  event:
+                    event_id: picking-2000-done
+                    event_type: in_transit_to_store
+                    store_code: es_es
+                    order_reference: '000000101'
+                    occurred_at: '2026-11-07T09:00:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"leg_ref":"WH/INT/00120","origin_source_code":"wh_central","destination_source_code":"store_01","items":[{"order_item_id":501,"sku":"SKU-1","qty":1}]}'
+              ready_for_pickup:
+                summary: ready_for_pickup
+                value:
+                  event:
+                    event_id: so-1001-ready
+                    event_type: ready_for_pickup
+                    store_code: es_es
+                    order_reference: '000000101'
+                    occurred_at: '2026-11-07T10:20:00Z'
+                    notification: { mode: suppress, template: null, comment: null }
+                    payload: '{"pickup_location_code":"store_01"}'
+              collected:
+                summary: collected
+                value:
+                  event:
+                    event_id: picking-2001-done
+                    event_type: collected
+                    store_code: es_es
+                    order_reference: '000000101'
+                    occurred_at: '2026-11-08T17:30:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"leg_ref":"ST01/OUT/00045","source_code":"store_01","items":[{"order_item_id":501,"sku":"SKU-1","qty":1}]}'
+              shipment_dispatched:
+                summary: shipment_dispatched
+                value:
+                  event:
+                    event_id: picking-2002-done
+                    event_type: shipment_dispatched
+                    store_code: es_es
+                    order_reference: '000000102'
+                    occurred_at: '2026-11-07T12:00:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"leg_ref":"WH/OUT/00120","source_code":"wh_central","items":[{"order_item_id":510,"sku":"SKU-2","qty":2}],"carrier":"carrier_code","tracking_number":"123456789"}'
+              invoice_issued:
+                summary: invoice_issued
+                value:
+                  event:
+                    event_id: move-3001-posted
+                    event_type: invoice_issued
+                    store_code: es_es
+                    order_reference: '000000102'
+                    occurred_at: '2026-11-07T12:05:00Z'
+                    notification: { mode: suppress, template: null, comment: null }
+                    payload: '{"odoo_invoice_id":3001,"odoo_invoice_number":"INV/2026/00001","issued_at":"2026-11-07T12:05:00Z","currency":"EUR","items":[{"order_item_id":510,"sku":"SKU-2","qty":2,"row_total_incl_tax":48.40}],"shipping_amount":0,"grand_total":48.40}'
+              delivered:
+                summary: delivered
+                value:
+                  event:
+                    event_id: picking-2002-delivered
+                    event_type: delivered
+                    store_code: es_es
+                    order_reference: '000000102'
+                    occurred_at: '2026-11-09T10:00:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"leg_ref":"WH/OUT/00120","delivered_at":"2026-11-09T09:45:00Z"}'
+              cancelled:
+                summary: cancelled
+                value:
+                  event:
+                    event_id: so-1002-cancel
+                    event_type: cancelled
+                    store_code: es_es
+                    order_reference: '000000103'
+                    occurred_at: '2026-11-07T11:00:00Z'
+                    notification: { mode: send, template: null, comment: null }
+                    payload: '{"reason":"sense estoc"}'
+              credit_note_issued:
+                summary: credit_note_issued
+                value:
+                  event:
+                    event_id: move-3002-posted
+                    event_type: credit_note_issued
+                    store_code: es_es
+                    order_reference: '000000102'
+                    occurred_at: '2026-11-10T09:00:00Z'
+                    notification: { mode: suppress, template: null, comment: null }
+                    payload: '{"odoo_credit_note_id":3002,"odoo_credit_note_number":"RINV/2026/00001","odoo_invoice_id":3001,"issued_at":"2026-11-10T09:00:00Z","currency":"EUR","items":[{"order_item_id":510,"sku":"SKU-2","qty":1}],"grand_total":24.20}'
+              return_received:
+                summary: return_received
+                value:
+                  event:
+                    event_id: picking-2010-done
+                    event_type: return_received
+                    store_code: es_es
+                    order_reference: '000000102'
+                    occurred_at: '2026-11-10T08:30:00Z'
+                    notification: { mode: suppress, template: null, comment: null }
+                    payload: '{"leg_ref":"WH/RET/00007","destination_source_code":"wh_central","items":[{"order_item_id":510,"sku":"SKU-2","qty":1}]}'
+      responses:
+        '200':
+          description: Esdeveniment processat (`processed`), reprès (`replayed`) o validat en dry-run (`validated`)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResult'
+              example:
+                event_id: so-1001-ready
+                status: processed
+                order_id: 123
+                order_state: processing
+                order_status: ready_for_pickup
+                magento_invoice_ids: []
+                magento_shipment_ids: []
+                magento_creditmemo_ids: []
+                pending_completion: []
+                dry_run: false
+        '400':
+          description: '`invalid_envelope`, `invalid_payload`, `unsupported_event_type`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: '[invalid_payload] Field "leg_ref" is required' }
+        '401':
+          description: Token absent o no vàlid (Magento)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '403':
+          description: El token no té el recurs ACL `Backstage_Bridge::events_write` (Magento)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404':
+          description: '`order_not_found`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: '[order_not_found] Order 000000101 not found in store es_es' }
+        '409':
+          description: '`event_id_conflict` (mateix event_id amb contingut diferent), `event_in_progress`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '422':
+          description: |
+            Regla de negoci no complerta: `status_not_allowed_for_state`, `transition_not_allowed`,
+            `completion_preconditions_failed`, `has_shipments`, `invoice_requires_credit_note`,
+            `online_refund_not_allowed`, `invoice_not_linked`, ...
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example: { message: '[status_not_allowed_for_state] Status "collected" is not allowed for state "processing" (allowed: complete)' }
+        '503':
+          description: '`bridge_disabled`, `temporary_failure`. Es pot reintentar.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+components:
+  securitySchemes:
+    integrationToken:
+      type: http
+      scheme: bearer
+      description: Access token d'una integració de Magento (System → Integrations) amb el recurs `Backstage_Bridge::events_write`.
+  schemas:
+    EventRequest:
+      type: object
+      required: [event]
+      additionalProperties: false
+      properties:
+        event:
+          $ref: '#/components/schemas/Event'
+    Event:
+      type: object
+      additionalProperties: false
+      required: [event_id, event_type, store_code, order_reference, occurred_at, notification, payload]
+      properties:
+        event_id:
+          type: string
+          pattern: '^[A-Za-z0-9._:-]{1,64}$'
+          description: Clau d'idempotència, determinista a l'ERP. Ex. `picking-2001-done`.
+        event_type:
+          type: string
+          enum:
+            - preparing_at_warehouse
+            - in_transit_to_store
+            - ready_for_pickup
+            - invoice_issued
+            - shipment_dispatched
+            - collected
+            - delivered
+            - cancelled
+            - credit_note_issued
+            - return_received
+        store_code:
+          type: string
+          minLength: 1
+          maxLength: 32
+          description: Codi de store view de Magento (`es_es`, `pt_pt`, ...)
+        order_reference:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: increment_id de la comanda Magento
+        occurred_at:
+          type: string
+          format: date-time
+          description: ISO-8601. Es rebutja si és més de 5 minuts al futur.
+        notification:
+          $ref: '#/components/schemas/NotificationPolicy'
+        payload:
+          type: string
+          maxLength: 262144
+          contentMediaType: application/json
+          description: |
+            String JSON amb un objecte. Esquema segons `event_type`:
+
+            | event_type | Esquema |
+            |---|---|
+            | preparing_at_warehouse | PayloadPreparingAtWarehouse |
+            | in_transit_to_store | PayloadInTransitToStore |
+            | ready_for_pickup | PayloadReadyForPickup |
+            | collected, shipment_dispatched | PayloadShipment |
+            | invoice_issued | PayloadInvoiceIssued |
+            | delivered | PayloadDelivered |
+            | cancelled | PayloadCancelled |
+            | credit_note_issued | PayloadCreditNoteIssued |
+            | return_received | PayloadReturnReceived |
+    NotificationPolicy:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      description: Per defecte no s'envia cap correu. `invoice_issued` no notifica mai.
+      properties:
+        mode:
+          type: string
+          enum: [send, suppress]
+        template:
+          type: [string, 'null']
+          maxLength: 64
+          description: Substitueix la plantilla per defecte (`preparing_at_warehouse`, `in_transit_to_store`, `ready_for_pickup`, `partially_fulfilled`, `dispatched`, `collected`, `delivered`, `cancelled`)
+        comment:
+          type: [string, 'null']
+          maxLength: 1000
+          description: Exclòs del hash d'idempotència
+    EventResult:
+      type: object
+      properties:
+        event_id: { type: string }
+        status:
+          type: string
+          enum: [processed, replayed, validated]
+        order_id: { type: [integer, 'null'] }
+        order_state: { type: [string, 'null'] }
+        order_status: { type: [string, 'null'] }
+        magento_invoice_ids: { type: array, items: { type: integer } }
+        magento_shipment_ids: { type: array, items: { type: integer } }
+        magento_creditmemo_ids: { type: array, items: { type: integer } }
+        pending_completion:
+          type: array
+          description: Què falta per tancar la comanda (respostes de `collected`, `shipment_dispatched` i `invoice_issued`)
+          items:
+            type: string
+            enum: [shipment, invoice, reservation]
+        dry_run: { type: boolean }
+    Error:
+      type: object
+      description: Cos d'error estàndard de Magento REST
+      properties:
+        message:
+          type: string
+          description: Comença amb el codi de negoci entre claudàtors
+        parameters:
+          type: array
+          items: {}
+        trace:
+          type: string
+          description: Només en mode developer
+    PayloadPreparingAtWarehouse:
+      $ref: './contract/payload/preparing_at_warehouse.schema.json'
+    PayloadInTransitToStore:
+      $ref: './contract/payload/in_transit_to_store.schema.json'
+    PayloadReadyForPickup:
+      $ref: './contract/payload/ready_for_pickup.schema.json'
+    PayloadShipment:
+      $ref: './contract/payload/shipment.schema.json'
+    PayloadInvoiceIssued:
+      $ref: './contract/payload/invoice_issued.schema.json'
+    PayloadDelivered:
+      $ref: './contract/payload/delivered.schema.json'
+    PayloadCancelled:
+      $ref: './contract/payload/cancelled.schema.json'
+    PayloadCreditNoteIssued:
+      $ref: './contract/payload/credit_note_issued.schema.json'
+    PayloadReturnReceived:
+      $ref: './contract/payload/return_received.schema.json'

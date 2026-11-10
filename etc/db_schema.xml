@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="backstage_bridge_event" resource="sales" engine="innodb" comment="Backstage events (idempotency and audit)">
+        <column xsi:type="int" name="entity_id" unsigned="true" nullable="false" identity="true" comment="Entity ID"/>
+        <column xsi:type="varchar" name="event_id" length="64" nullable="false" comment="Odoo deterministic event id"/>
+        <column xsi:type="varchar" name="event_type" length="40" nullable="false" comment="Event type"/>
+        <column xsi:type="varchar" name="store_code" length="32" nullable="false" comment="Store view code"/>
+        <column xsi:type="varchar" name="order_reference" length="50" nullable="false" comment="Order increment id"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="true" comment="Magento order entity id"/>
+        <column xsi:type="varchar" name="payload_hash" length="64" nullable="false" comment="SHA-256 of canonical envelope"/>
+        <column xsi:type="varchar" name="status" length="16" nullable="false" default="received" comment="received|processing|completed|failed|rejected"/>
+        <column xsi:type="mediumtext" name="result_json" nullable="true" comment="Result returned to Odoo"/>
+        <column xsi:type="text" name="error_json" nullable="true" comment="Last error"/>
+        <column xsi:type="smallint" name="attempt_count" unsigned="true" nullable="false" default="0" comment="Attempts"/>
+        <column xsi:type="datetime" name="locked_until" nullable="true" comment="Processing lock expiry"/>
+        <column xsi:type="boolean" name="dry_run" nullable="false" default="false" comment="Processed in dry-run"/>
+        <column xsi:type="datetime" name="occurred_at" nullable="false" comment="Occurred at (UTC)"/>
+        <column xsi:type="timestamp" name="received_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="false" comment="Received at"/>
+        <column xsi:type="datetime" name="processed_at" nullable="true" comment="Processed at (UTC)"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="entity_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BACKSTAGE_BRIDGE_EVENT_EVENT_ID">
+            <column name="event_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BACKSTAGE_BRIDGE_EVENT_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="backstage_bridge_event" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="SET NULL"/>
+        <index referenceId="BACKSTAGE_BRIDGE_EVENT_ORDER_ID" indexType="btree">
+            <column name="order_id"/>
+        </index>
+        <index referenceId="BACKSTAGE_BRIDGE_EVENT_EVENT_TYPE_STATUS" indexType="btree">
+            <column name="event_type"/>
+            <column name="status"/>
+        </index>
+    </table>
+
+    <table name="backstage_bridge_odoo_document_link" resource="sales" engine="innodb" comment="Odoo fiscal document to Magento mirror document">
+        <column xsi:type="int" name="link_id" unsigned="true" nullable="false" identity="true" comment="Link ID"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Magento order entity id"/>
+        <column xsi:type="varchar" name="odoo_document_type" length="20" nullable="false" comment="invoice|credit_note"/>
+        <column xsi:type="varchar" name="odoo_document_id" length="64" nullable="false" comment="Odoo record id"/>
+        <column xsi:type="varchar" name="odoo_document_number" length="64" nullable="true" comment="Odoo document number"/>
+        <column xsi:type="varchar" name="magento_entity_type" length="20" nullable="true" comment="invoice|creditmemo"/>
+        <column xsi:type="int" name="magento_entity_id" unsigned="true" nullable="true" comment="Magento document entity id"/>
+        <column xsi:type="varchar" name="link_mode" length="10" nullable="false" comment="created|matched"/>
+        <column xsi:type="varchar" name="match_status" length="20" nullable="false" comment="exact|within_tolerance|mismatch_audited"/>
+        <column xsi:type="decimal" name="amount" scale="4" precision="20" nullable="false" default="0" comment="Odoo grand total covered"/>
+        <column xsi:type="varchar" name="payment_state" length="20" nullable="true" comment="Odoo payment state"/>
+        <column xsi:type="text" name="amounts_json" nullable="true" comment="Odoo amounts snapshot"/>
+        <column xsi:type="varchar" name="event_id" length="64" nullable="false" comment="Event that created the link"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="false" comment="Created at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="link_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LINK_TYPE_DOCUMENT_ID">
+            <column name="odoo_document_type"/>
+            <column name="odoo_document_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LINK_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="backstage_bridge_odoo_document_link" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <index referenceId="BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LINK_MAGENTO_ENTITY" indexType="btree">
+            <column name="magento_entity_type"/>
+            <column name="magento_entity_id"/>
+        </index>
+    </table>
+
+    <table name="backstage_bridge_leg" resource="sales" engine="innodb" comment="Logistic legs (light copy of Odoo pickings)">
+        <column xsi:type="int" name="leg_id" unsigned="true" nullable="false" identity="true" comment="Leg ID"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Magento order entity id"/>
+        <column xsi:type="varchar" name="leg_ref" length="64" nullable="false" comment="Odoo picking name"/>
+        <column xsi:type="varchar" name="type" length="20" nullable="false" comment="internal_transfer|customer_delivery|store_pickup|return"/>
+        <column xsi:type="varchar" name="origin_source_code" length="64" nullable="true" comment="Origin MSI source"/>
+        <column xsi:type="varchar" name="destination_source_code" length="64" nullable="true" comment="Destination MSI source"/>
+        <column xsi:type="varchar" name="carrier" length="64" nullable="true" comment="Carrier"/>
+        <column xsi:type="varchar" name="tracking_number" length="128" nullable="true" comment="Tracking number"/>
+        <column xsi:type="varchar" name="status" length="20" nullable="false" comment="Leg status"/>
+        <column xsi:type="varchar" name="created_event_id" length="64" nullable="false" comment="Creating event"/>
+        <column xsi:type="varchar" name="updated_event_id" length="64" nullable="true" comment="Last updating event"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="false" comment="Created at"/>
+        <column xsi:type="timestamp" name="updated_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="true" comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="leg_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BACKSTAGE_BRIDGE_LEG_ORDER_ID_LEG_REF">
+            <column name="order_id"/>
+            <column name="leg_ref"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BACKSTAGE_BRIDGE_LEG_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="backstage_bridge_leg" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="CASCADE"/>
+    </table>
+
+    <table name="backstage_bridge_notification" resource="sales" engine="innodb" comment="Customer notifications sent by the bridge">
+        <column xsi:type="int" name="notification_id" unsigned="true" nullable="false" identity="true" comment="Notification ID"/>
+        <column xsi:type="varchar" name="event_id" length="64" nullable="false" comment="Event id"/>
+        <column xsi:type="varchar" name="template_code" length="64" nullable="false" comment="Logical template code"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="false" comment="Magento order entity id"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="false" comment="Store id"/>
+        <column xsi:type="varchar" name="status" length="16" nullable="false" comment="pending|sent|failed|suppressed"/>
+        <column xsi:type="text" name="error" nullable="true" comment="Last error"/>
+        <column xsi:type="smallint" name="attempt_count" unsigned="true" nullable="false" default="0" comment="Attempts"/>
+        <column xsi:type="timestamp" name="created_at" nullable="false" default="CURRENT_TIMESTAMP" on_update="false" comment="Created at"/>
+        <column xsi:type="datetime" name="sent_at" nullable="true" comment="Sent at (UTC)"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="notification_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BACKSTAGE_BRIDGE_NOTIFICATION_EVENT_ID_TEMPLATE_CODE">
+            <column name="event_id"/>
+            <column name="template_code"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BACKSTAGE_BRIDGE_NOTIFICATION_ORDER_ID_SALES_ORDER_ENTITY_ID"
+                    table="backstage_bridge_notification" column="order_id"
+                    referenceTable="sales_order" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <index referenceId="BACKSTAGE_BRIDGE_NOTIFICATION_STATUS" indexType="btree">
+            <column name="status"/>
+        </index>
+    </table>
+
+    <table name="backstage_bridge_leg_item" resource="sales" engine="innodb" comment="Logistic leg items">
+        <column xsi:type="int" name="leg_item_id" unsigned="true" nullable="false" identity="true" comment="Leg item ID"/>
+        <column xsi:type="int" name="leg_id" unsigned="true" nullable="false" comment="Leg ID"/>
+        <column xsi:type="int" name="order_item_id" unsigned="true" nullable="false" comment="Magento order item id"/>
+        <column xsi:type="varchar" name="sku" length="64" nullable="false" comment="SKU"/>
+        <column xsi:type="decimal" name="qty" scale="4" precision="12" nullable="false" default="0" comment="Qty"/>
+        <column xsi:type="int" name="magento_shipment_id" unsigned="true" nullable="true" comment="Magento shipment id"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="leg_item_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BACKSTAGE_BRIDGE_LEG_ITEM_LEG_ID_ORDER_ITEM_ID">
+            <column name="leg_id"/>
+            <column name="order_item_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BACKSTAGE_BRIDGE_LEG_ITEM_LEG_ID_BACKSTAGE_BRIDGE_LEG_LEG_ID"
+                    table="backstage_bridge_leg_item" column="leg_id"
+                    referenceTable="backstage_bridge_leg" referenceColumn="leg_id" onDelete="CASCADE"/>
+    </table>
+</schema>

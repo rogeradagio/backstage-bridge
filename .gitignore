@@ -1,0 +1,4 @@
+/vendor/
+/generated/
+/var/
+/.phpunit.result.cache

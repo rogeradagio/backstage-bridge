@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="backstage_bridge" translate="label" sortOrder="900" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Backstage Bridge</label>
+            <tab>sales</tab>
+            <resource>Backstage_Bridge::config</resource>
+            <group id="general" translate="label" sortOrder="10" showInDefault="1">
+                <label>General</label>
+                <field id="mode" translate="label comment" type="select" sortOrder="10" showInDefault="1">
+                    <label>Mode</label>
+                    <source_model>Backstage\Bridge\Model\Config\Source\Mode</source_model>
+                    <comment>disabled: rebutja tots els esdeveniments. dry_run: valida i registra sense modificar comandes. live: aplica els esdeveniments.</comment>
+                </field>
+                <field id="max_payload_bytes" translate="label" type="text" sortOrder="20" showInDefault="1">
+                    <label>Mida màxima del payload (bytes)</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="max_event_age_days" translate="label" type="text" sortOrder="30" showInDefault="1">
+                    <label>Antiguitat màxima d'un esdeveniment (dies)</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="processing_lock_seconds" translate="label" type="text" sortOrder="40" showInDefault="1">
+                    <label>Temps màxim en processament (segons)</label>
+                    <validate>validate-digits</validate>
+                </field>
+                <field id="allow_online_refund" translate="label comment" type="select" sortOrder="50" showInDefault="1">
+                    <label>Permetre abonaments online</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Sí: un credit_note_issued amb refund_mode=online demana a la passarel·la (Adyen, PayPal...) que retorni els diners. No: els abonaments són només mirall offline.</comment>
+                </field>
+            </group>
+            <group id="notifications" translate="label comment" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Correus al client</label>
+                <comment>Cap correu s'envia si l'esdeveniment no porta notification.mode = send. Plantilles per store view.</comment>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enviar correus</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="identity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Remitent</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Identity</source_model>
+                </field>
+                <field id="copy_to" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Còpia oculta (BCC)</label>
+                    <comment>Correus separats per comes. Buit = cap.</comment>
+                </field>
+                <field id="preparing_at_warehouse_template" translate="label" type="select" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: preparant al magatzem</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="in_transit_to_store_template" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: en camí a la botiga</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="ready_for_pickup_template" translate="label" type="select" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: llest per recollir</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="partially_fulfilled_template" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: enviament parcial</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="dispatched_template" translate="label" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: enviat</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="collected_template" translate="label" type="select" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: recollit</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="delivered_template" translate="label" type="select" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: lliurat</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+                <field id="cancelled_template" translate="label" type="select" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Plantilla: cancel·lat</label>
+                    <source_model>Magento\Config\Model\Config\Source\Email\Template</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

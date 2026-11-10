@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://backstage-bridge.local/contract/event-envelope.schema.json",
+  "title": "Backstage event envelope (Odoo -> Magento)",
+  "description": "Cos de POST /V1/backstage/events. El camp payload és un string JSON validat per l'esquema del seu event_type.",
+  "type": "object",
+  "required": ["event"],
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "event_type", "store_code", "order_reference", "occurred_at", "notification", "payload"],
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,64}$",
+          "description": "Determinista a Odoo. Ex.: picking-2001-done, move-3001-posted, so-1001-ready"
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "preparing_at_warehouse",
+            "in_transit_to_store",
+            "ready_for_pickup",
+            "invoice_issued",
+            "shipment_dispatched",
+            "collected",
+            "delivered",
+            "cancelled",
+            "credit_note_issued",
+            "return_received"
+          ]
+        },
+        "store_code": { "type": "string", "minLength": 1, "maxLength": 32, "description": "Codi de store view de Magento (es_es, pt_pt, ...)" },
+        "order_reference": { "type": "string", "minLength": 1, "maxLength": 50, "description": "increment_id de la comanda Magento" },
+        "occurred_at": { "type": "string", "format": "date-time", "description": "ISO-8601. Rebutjat si és més de 5 minuts al futur." },
+        "notification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["send", "suppress"] },
+            "template": { "type": ["string", "null"], "maxLength": 64 },
+            "comment": { "type": ["string", "null"], "maxLength": 1000, "description": "Exclòs del hash d'idempotència" }
+          }
+        },
+        "payload": { "type": "string", "maxLength": 262144, "description": "String JSON amb un objecte; esquema segons event_type" }
+      }
+    }
+  }
+}

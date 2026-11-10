@@ -1,0 +1,120 @@
+{
+    "backstage_bridge_event": {
+        "column": {
+            "entity_id": true,
+            "event_id": true,
+            "event_type": true,
+            "store_code": true,
+            "order_reference": true,
+            "order_id": true,
+            "payload_hash": true,
+            "status": true,
+            "result_json": true,
+            "error_json": true,
+            "attempt_count": true,
+            "locked_until": true,
+            "dry_run": true,
+            "occurred_at": true,
+            "received_at": true,
+            "processed_at": true
+        },
+        "index": {
+            "BACKSTAGE_BRIDGE_EVENT_ORDER_ID": true,
+            "BACKSTAGE_BRIDGE_EVENT_EVENT_TYPE_STATUS": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BACKSTAGE_BRIDGE_EVENT_EVENT_ID": true,
+            "BACKSTAGE_BRIDGE_EVENT_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    },
+    "backstage_bridge_odoo_document_link": {
+        "column": {
+            "link_id": true,
+            "order_id": true,
+            "odoo_document_type": true,
+            "odoo_document_id": true,
+            "odoo_document_number": true,
+            "magento_entity_type": true,
+            "magento_entity_id": true,
+            "link_mode": true,
+            "match_status": true,
+            "amount": true,
+            "payment_state": true,
+            "amounts_json": true,
+            "event_id": true,
+            "created_at": true
+        },
+        "index": {
+            "BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LNK_MAGENTO_ENTT_TYPE_MAGENTO_ENTT_ID": true,
+            "IDX_00C6E376F3CC87F4261068CD5E849F4C": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LINK_ODOO_DOCUMENT_TYPE_ODOO_DOCUMENT_ID": true,
+            "BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LINK_ORDER_ID_SALES_ORDER_ENTITY_ID": true,
+            "UNQ_879C6CD51AF9CBB2FF78B6C9E16B3836": true,
+            "BACKSTAGE_BRIDGE_ODOO_DOCUMENT_LNK_ORDER_ID_SALES_ORDER_ENTT_ID": true
+        }
+    },
+    "backstage_bridge_leg": {
+        "column": {
+            "leg_id": true,
+            "order_id": true,
+            "leg_ref": true,
+            "type": true,
+            "origin_source_code": true,
+            "destination_source_code": true,
+            "carrier": true,
+            "tracking_number": true,
+            "status": true,
+            "created_event_id": true,
+            "updated_event_id": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BACKSTAGE_BRIDGE_LEG_ORDER_ID_LEG_REF": true,
+            "BACKSTAGE_BRIDGE_LEG_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    },
+    "backstage_bridge_leg_item": {
+        "column": {
+            "leg_item_id": true,
+            "leg_id": true,
+            "order_item_id": true,
+            "sku": true,
+            "qty": true,
+            "magento_shipment_id": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BACKSTAGE_BRIDGE_LEG_ITEM_LEG_ID_ORDER_ITEM_ID": true,
+            "FK_C5939A9C05894EF81787ED785E6077A2": true,
+            "BACKSTAGE_BRIDGE_LEG_ITEM_LEG_ID_BACKSTAGE_BRIDGE_LEG_LEG_ID": true
+        }
+    },
+    "backstage_bridge_notification": {
+        "column": {
+            "notification_id": true,
+            "event_id": true,
+            "template_code": true,
+            "order_id": true,
+            "store_id": true,
+            "status": true,
+            "error": true,
+            "attempt_count": true,
+            "created_at": true,
+            "sent_at": true
+        },
+        "index": {
+            "BACKSTAGE_BRIDGE_NOTIFICATION_STATUS": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BACKSTAGE_BRIDGE_NOTIFICATION_EVENT_ID_TEMPLATE_CODE": true,
+            "BACKSTAGE_BRIDGE_NOTIFICATION_ORDER_ID_SALES_ORDER_ENTITY_ID": true
+        }
+    }
+}

@@ -1,0 +1,23 @@
+<!--@subject {{trans "Estamos preparando tu pedido #%increment_id" increment_id=$order_data.increment_id}} @-->
+<!--@vars {
+"var order_data.customer_name":"Customer Name",
+"var order_data.increment_id":"Order Id",
+"var tracking_number":"Tracking number",
+"var carrier":"Carrier",
+"var pickup_location_name":"Pickup location",
+"var this.getUrl($store,'sales/order/history/',[_nosid:1])":"Orders URL"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+<table>
+    <tr class="email-intro">
+        <td>
+            <p class="greeting">{{trans "Hola %customer_name," customer_name=$order_data.customer_name}}</p>
+            <h1>{{trans "Estamos preparando tu pedido"}}</h1>
+            <p>{{trans "Tu pedido #%increment_id ya está en preparación en nuestro almacén. Te avisaremos cuando salga." increment_id=$order_data.increment_id}}</p>
+            <p>{{trans 'Puedes consultar el estado de tu pedido en <a href="%account_url">tu cuenta</a>.' account_url=$this.getUrl($store,'sales/order/history/',[_nosid:1]) |raw}}</p>
+        </td>
+    </tr>
+</table>
+
+{{template config_path="design/email/footer_template"}}

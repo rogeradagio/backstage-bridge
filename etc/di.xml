@@ -1,0 +1,267 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Backstage\Bridge\Api\FulfillmentEventManagementInterface" type="Backstage\Bridge\Model\EventProcessor"/>
+    <preference for="Backstage\Bridge\Api\Data\FulfillmentEventInterface" type="Backstage\Bridge\Model\Data\FulfillmentEvent"/>
+    <preference for="Backstage\Bridge\Api\Data\NotificationPolicyInterface" type="Backstage\Bridge\Model\Data\NotificationPolicy"/>
+    <preference for="Backstage\Bridge\Api\Data\FulfillmentEventResultInterface" type="Backstage\Bridge\Model\Data\FulfillmentEventResult"/>
+
+    <!-- Logger propi: var/log/backstage/bridge.log -->
+    <virtualType name="BackstageBridgeLogHandler" type="Magento\Framework\Logger\Handler\Base">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/backstage/bridge.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeLogger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="name" xsi:type="string">BackstageBridge</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="file" xsi:type="object">BackstageBridgeLogHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Esquemes de payload (equivalents a docs/contract/payload) -->
+    <virtualType name="BackstageBridgeSchemaPreparing" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="origin_source_codes" xsi:type="array">
+                    <item name="type" xsi:type="string">string[]</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeSchemaInTransitToStore" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="leg_ref" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="origin_source_code" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="destination_source_code" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="items" xsi:type="array">
+                    <item name="type" xsi:type="string">items</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeSchemaReadyForPickup" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="pickup_location_code" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="leg_ref" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- collected i shipment_dispatched comparteixen esquema -->
+    <virtualType name="BackstageBridgeSchemaShipment" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="leg_ref" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="source_code" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="items" xsi:type="array">
+                    <item name="type" xsi:type="string">items</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="carrier" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+                <item name="tracking_number" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeSchemaInvoiceIssued" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="odoo_invoice_id" xsi:type="array">
+                    <item name="type" xsi:type="string">int</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="odoo_invoice_number" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="issued_at" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="currency" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="items" xsi:type="array">
+                    <item name="type" xsi:type="string">items</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="shipping_amount" xsi:type="array">
+                    <item name="type" xsi:type="string">number</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+                <item name="shipping_tax_amount" xsi:type="array">
+                    <item name="type" xsi:type="string">number</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+                <item name="grand_total" xsi:type="array">
+                    <item name="type" xsi:type="string">number</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="payment_state" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+                <item name="accept_mismatch" xsi:type="array">
+                    <item name="type" xsi:type="string">bool</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Backstage\Bridge\Model\EventValidator">
+        <arguments>
+            <argument name="payloadSchemas" xsi:type="array">
+                <item name="preparing_at_warehouse" xsi:type="object">BackstageBridgeSchemaPreparing</item>
+                <item name="in_transit_to_store" xsi:type="object">BackstageBridgeSchemaInTransitToStore</item>
+                <item name="ready_for_pickup" xsi:type="object">BackstageBridgeSchemaReadyForPickup</item>
+                <item name="collected" xsi:type="object">BackstageBridgeSchemaShipment</item>
+                <item name="shipment_dispatched" xsi:type="object">BackstageBridgeSchemaShipment</item>
+                <item name="invoice_issued" xsi:type="object">BackstageBridgeSchemaInvoiceIssued</item>
+                <item name="cancelled" xsi:type="object">BackstageBridgeSchemaCancelled</item>
+                <item name="delivered" xsi:type="object">BackstageBridgeSchemaDelivered</item>
+                <item name="credit_note_issued" xsi:type="object">BackstageBridgeSchemaCreditNote</item>
+                <item name="return_received" xsi:type="object">BackstageBridgeSchemaReturn</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <virtualType name="BackstageBridgeSchemaCreditNote" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="odoo_credit_note_id" xsi:type="array"><item name="type" xsi:type="string">int</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="odoo_credit_note_number" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="odoo_invoice_id" xsi:type="array"><item name="type" xsi:type="string">int</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="issued_at" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="currency" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="items" xsi:type="array"><item name="type" xsi:type="string">items</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="shipping_amount" xsi:type="array"><item name="type" xsi:type="string">number</item><item name="required" xsi:type="boolean">false</item></item>
+                <item name="adjustment_positive" xsi:type="array"><item name="type" xsi:type="string">number</item><item name="required" xsi:type="boolean">false</item></item>
+                <item name="adjustment_negative" xsi:type="array"><item name="type" xsi:type="string">number</item><item name="required" xsi:type="boolean">false</item></item>
+                <item name="grand_total" xsi:type="array"><item name="type" xsi:type="string">number</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="refund_mode" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">false</item></item>
+                <item name="accept_mismatch" xsi:type="array"><item name="type" xsi:type="string">bool</item><item name="required" xsi:type="boolean">false</item></item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeSchemaReturn" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="leg_ref" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">true</item></item>
+                <item name="destination_source_code" xsi:type="array"><item name="type" xsi:type="string">string</item><item name="required" xsi:type="boolean">false</item></item>
+                <item name="items" xsi:type="array"><item name="type" xsi:type="string">items</item><item name="required" xsi:type="boolean">true</item></item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="BackstageBridgeSchemaCancelled" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="reason" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeSchemaDelivered" type="Backstage\Bridge\Model\PayloadSchema\FieldSchema">
+        <arguments>
+            <argument name="fields" xsi:type="array">
+                <item name="leg_ref" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">true</item>
+                </item>
+                <item name="delivered_at" xsi:type="array">
+                    <item name="type" xsi:type="string">string</item>
+                    <item name="required" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger propi també per a les notificacions -->
+    <type name="Backstage\Bridge\Model\NotificationService">
+        <arguments>
+            <argument name="logger" xsi:type="object">BackstageBridgeLogger</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="BackstageBridgeHandlerCollected" type="Backstage\Bridge\Model\Handler\ShipmentHandler">
+        <arguments>
+            <argument name="legType" xsi:type="string">store_pickup</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeHandlerShipmentDispatched" type="Backstage\Bridge\Model\Handler\ShipmentHandler">
+        <arguments>
+            <argument name="legType" xsi:type="string">customer_delivery</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Handlers de canvi de status -->
+    <virtualType name="BackstageBridgeHandlerPreparing" type="Backstage\Bridge\Model\Handler\StatusChangeHandler">
+        <arguments>
+            <argument name="targetStatus" xsi:type="string">preparing_at_warehouse</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeHandlerInTransitToStore" type="Backstage\Bridge\Model\Handler\StatusChangeHandler">
+        <arguments>
+            <argument name="targetStatus" xsi:type="string">in_transit_to_store</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="BackstageBridgeHandlerReadyForPickup" type="Backstage\Bridge\Model\Handler\StatusChangeHandler">
+        <arguments>
+            <argument name="targetStatus" xsi:type="string">ready_for_pickup</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Backstage\Bridge\Model\EventProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">BackstageBridgeLogger</argument>
+            <argument name="handlers" xsi:type="array">
+                <item name="preparing_at_warehouse" xsi:type="object">BackstageBridgeHandlerPreparing</item>
+                <item name="in_transit_to_store" xsi:type="object">BackstageBridgeHandlerInTransitToStore</item>
+                <item name="ready_for_pickup" xsi:type="object">BackstageBridgeHandlerReadyForPickup</item>
+                <item name="collected" xsi:type="object">BackstageBridgeHandlerCollected</item>
+                <item name="shipment_dispatched" xsi:type="object">BackstageBridgeHandlerShipmentDispatched</item>
+                <item name="invoice_issued" xsi:type="object">Backstage\Bridge\Model\Handler\InvoiceIssuedHandler</item>
+                <item name="cancelled" xsi:type="object">Backstage\Bridge\Model\Handler\CancelledHandler</item>
+                <item name="delivered" xsi:type="object">Backstage\Bridge\Model\Handler\DeliveredHandler</item>
+                <item name="credit_note_issued" xsi:type="object">Backstage\Bridge\Model\Handler\CreditNoteIssuedHandler</item>
+                <item name="return_received" xsi:type="object">Backstage\Bridge\Model\Handler\ReturnReceivedHandler</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <backstage_bridge>
+            <general>
+                <!-- disabled | dry_run | live. Per defecte no fa res. -->
+                <mode>disabled</mode>
+                <max_payload_bytes>262144</max_payload_bytes>
+                <max_event_age_days>30</max_event_age_days>
+                <processing_lock_seconds>300</processing_lock_seconds>
+                <!-- 0: els abonaments són sempre mirall offline (no es retornen diners des de Magento). -->
+                <allow_online_refund>0</allow_online_refund>
+            </general>
+            <notifications>
+                <!-- Interruptor global: amb 0 cap esdeveniment envia correu, encara que demani "send". -->
+                <enabled>1</enabled>
+                <identity>sales</identity>
+                <copy_to/>
+                <preparing_at_warehouse_template>backstage_bridge_notifications_preparing_at_warehouse_template</preparing_at_warehouse_template>
+                <in_transit_to_store_template>backstage_bridge_notifications_in_transit_to_store_template</in_transit_to_store_template>
+                <ready_for_pickup_template>backstage_bridge_notifications_ready_for_pickup_template</ready_for_pickup_template>
+                <partially_fulfilled_template>backstage_bridge_notifications_partially_fulfilled_template</partially_fulfilled_template>
+                <dispatched_template>backstage_bridge_notifications_dispatched_template</dispatched_template>
+                <collected_template>backstage_bridge_notifications_collected_template</collected_template>
+                <delivered_template>backstage_bridge_notifications_delivered_template</delivered_template>
+                <cancelled_template>backstage_bridge_notifications_cancelled_template</cancelled_template>
+            </notifications>
+        </backstage_bridge>
+    </default>
+</config>

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Payload return_received",
+  "description": "Albarà de devolució validat a Odoo. Magento només ho registra (tram return + historial). L'estoc el porta l'export d'Odoo; els diners, credit_note_issued.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["leg_ref", "items"],
+  "properties": {
+    "leg_ref": { "type": "string", "minLength": 1, "description": "Albarà de devolució d'Odoo" },
+    "destination_source_code": { "type": "string", "description": "Font on torna el material (informatiu)" },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["order_item_id", "sku", "qty"],
+        "properties": {
+          "order_item_id": { "type": "integer" },
+          "sku": { "type": "string" },
+          "qty": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "replay": { "type": "boolean" }
+  }
+}

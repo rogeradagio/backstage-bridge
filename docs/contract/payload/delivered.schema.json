@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Payload delivered",
+  "description": "El transportista ha lliurat un enviament a client. Només tanca com a delivered si la comanda està completa (tot expedit, facturat, enllaçat a Odoo i reserva neta zero); si no, 422 completion_preconditions_failed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["leg_ref"],
+  "properties": {
+    "leg_ref": { "type": "string", "minLength": 1, "description": "Albarà Odoo del shipment_dispatched lliurat" },
+    "delivered_at": { "type": "string", "format": "date-time" },
+    "replay": { "type": "boolean" }
+  }
+}

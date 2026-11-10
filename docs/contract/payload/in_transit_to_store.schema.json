@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Payload in_transit_to_store",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["leg_ref", "origin_source_code", "destination_source_code"],
+  "properties": {
+    "leg_ref": { "type": "string", "minLength": 1, "description": "Nom de l'albarà Odoo (p. ex. WH/INT/00120)" },
+    "origin_source_code": { "type": "string", "minLength": 1 },
+    "destination_source_code": { "type": "string", "minLength": 1 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sku", "qty"],
+        "properties": {
+          "order_item_id": { "type": "integer" },
+          "sku": { "type": "string" },
+          "qty": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "replay": { "type": "boolean" }
+  }
+}

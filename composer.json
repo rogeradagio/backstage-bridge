@@ -1,0 +1,31 @@
+{
+  "name": "backstage/module-bridge",
+  "description": "Backstage Bridge: applies fulfilment events from an ERP to Magento 2 orders",
+  "type": "magento2-module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Roger Pedrol"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "magento/framework": "^103.0.4",
+    "magento/module-backend": "*",
+    "magento/module-config": "*",
+    "magento/module-email": "*",
+    "magento/module-inventory-api": "*",
+    "magento/module-inventory-sales-api": "*",
+    "magento/module-sales": "*",
+    "magento/module-store": "*",
+    "magento/module-webapi": "*"
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Backstage\\Bridge\\": ""
+    }
+  }
+}

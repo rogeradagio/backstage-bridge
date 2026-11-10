@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Payload credit_note_issued",
+  "description": "Factura rectificativa d'Odoo. Magento crea l'abonament mirall contra la factura Magento enllaçada a odoo_invoice_id. Mai retorna estoc a la font. Offline per defecte.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["odoo_credit_note_id", "odoo_credit_note_number", "odoo_invoice_id", "issued_at", "currency", "items", "grand_total"],
+  "properties": {
+    "odoo_credit_note_id": { "type": "integer", "description": "account.move id de la rectificativa" },
+    "odoo_credit_note_number": { "type": "string" },
+    "odoo_invoice_id": { "type": "integer", "description": "account.move id de la factura d'origen, ja enviada amb invoice_issued" },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["order_item_id", "sku", "qty"],
+        "properties": {
+          "order_item_id": { "type": "integer" },
+          "sku": { "type": "string" },
+          "qty": { "type": "number", "exclusiveMinimum": 0 }
+        }
+      }
+    },
+    "shipping_amount": { "type": "number", "description": "Ports abonats. Per defecte 0 (Magento no retorna ports si no s'indica)." },
+    "adjustment_positive": { "type": "number" },
+    "adjustment_negative": { "type": "number" },
+    "grand_total": { "type": "number", "description": "Es compara amb Magento (tolerància 0,02)" },
+    "refund_mode": { "type": "string", "enum": ["offline", "online"], "description": "online només si Magento té allow_online_refund activat" },
+    "accept_mismatch": { "type": "boolean", "description": "Requereix notification.mode=suppress" },
+    "replay": { "type": "boolean" }
+  }
+}
